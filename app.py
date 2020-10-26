@@ -21,6 +21,7 @@ def get_data(verbose=False) -> Dict[str, pd.DataFrame]:
         ("shanghai", "shanghaiData.csv"),
         ("cwur", "cwurData.csv"),
         ("times", "timesData.csv"),
+        ("cwur_all", "cwurAll.csv"),
     ]
 
     country_lookup = pd.read_csv(base_url + "school_and_country_table.csv").rename(
@@ -94,41 +95,38 @@ def line_plot(df, N=200, countries=False):
     return fig
 
 
-def main():
-    """the starting point of the app"""
-    st.title("University Rankings")
-
+def df_filter_country_and_year(df):
     st.subheader("Data")
-    data = get_data()
-    df = data["cwur"]
 
     all_countries = list(df.country.unique())
-    with st.sidebar:
-        st.header("Options")
-        selected_countries = st.multiselect("Countries", all_countries, ["Australia"])
-        df = df.query("country == @selected_countries")
 
-        yr_low, yr_high = st.slider(
-            "Years", int(df.year.min()), int(df.year.max()), (2013, 2015), step=1
-        )
+    st.text("Select 1 or more countries")
+    selected_countries = st.multiselect("Countries", all_countries, ["Australia"])
+    df = df.query("country == @selected_countries")
 
-        st.write(yr_low, yr_high)
-        df = df.query("@yr_low <= year <= @yr_high")
+    st.text("Select range of years to look at")
+    yr_min = int(df.year.min())
+    yr_max = int(df.year.max())
+    yr_low, yr_high = st.slider("Years", yr_min, yr_max, (yr_min, yr_max), step=1)
 
-    # some selectors
-    left_col, right_col = st.beta_columns(2)
-    with left_col:
-        st.write("left!")
-    with right_col:
-        st.write("right")
+    st.write(yr_low, yr_high)
+    df = df.query("@yr_low <= year <= @yr_high")
 
     st.markdown(
         f"Showing {df.shape[0]} universities from {len(selected_countries)} countries."
     )
     st.dataframe(df)
 
+    return df
+
+
+def cwur_kaggle(df):
+    df = df_filter_country_and_year(df)
+
     st.subheader("Line plot")
-    topN = st.slider("Select top N universities to display", 10, int(df.world_rank.max()), 250)
+    topN = st.slider(
+        "Select top N universities to display", 10, int(df.world_rank.max()), 250
+    )
     fig = line_plot(df, N=topN)
     st.plotly_chart(fig)
 
@@ -140,6 +138,59 @@ def main():
     st.plotly_chart(fig)
 
 
+def cwur_all(df):
+    df = df_filter_country_and_year(df)
+
+    st.subheader("Line plot")
+    topN = st.slider(
+        "Select top N universities to display", 10, int(df.world_rank.max()), 250
+    )
+    fig = line_plot(df, N=topN)
+    st.plotly_chart(fig)
+
+    st.subheader("Some Viz")
+    fig = some_viz(df)
+    st.plotly_chart(fig)
+
+    fig = par_plot(df)
+    st.plotly_chart(fig)
+
+
+def compare_rankings(data):
+    st.header("Ranking vs Rankings")
+    pass
+
+
+def main():
+    """the starting point of the app"""
+    st.title("University Rankings")
+
+    st.sidebar.title("Choose Dataset")
+
+    app_modes = [
+        "CWUR Kaggle",
+        "CWUR All years",
+        "Shanghai",
+        "Times",
+        "Compare Rankings",
+    ]
+    app_mode = st.sidebar.radio("", app_modes)
+
+    data = get_data()
+
+    st.header(app_mode)
+
+    if app_mode == app_modes[0]:
+        cwur_kaggle(data["cwur"])
+    elif app_mode == app_modes[1]:
+        cwur_all(data["cwur_all"])
+    elif app_mode == app_modes[2]:
+        pass
+    elif app_mode == app_modes[3]:
+        pass
+    elif app_mode == app_modes[4]:
+        compare_rankings(data)
+
+
 if __name__ == "__main__":
     main()
-    st.balloons()
