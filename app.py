@@ -96,26 +96,26 @@ def line_plot(df, N=200, countries=False):
 
 
 def df_filter_country_and_year(df):
-    st.subheader("Data")
+    with st.sidebar:
+        st.subheader("Data")
 
-    all_countries = list(df.country.unique())
+        all_countries = list(df.country.unique())
 
-    st.text("Select 1 or more countries")
-    selected_countries = st.multiselect("Countries", all_countries, ["Australia"])
-    df = df.query("country == @selected_countries")
+        st.text("Select 1 or more countries")
+        selected_countries = st.multiselect("Countries", all_countries, ["Australia"])
+        df = df.query("country == @selected_countries")
 
-    st.text("Select range of years to look at")
-    yr_min = int(df.year.min())
-    yr_max = int(df.year.max())
-    yr_low, yr_high = st.slider("Years", yr_min, yr_max, (yr_min, yr_max), step=1)
+        st.text("Select range of years to look at")
+        yr_min = int(df.year.min())
+        yr_max = int(df.year.max())
+        yr_low, yr_high = st.slider("Years", yr_min, yr_max, (yr_min, yr_max), step=1)
 
-    st.write(yr_low, yr_high)
-    df = df.query("@yr_low <= year <= @yr_high")
+        st.write(yr_low, yr_high)
+        df = df.query("@yr_low <= year <= @yr_high")
 
-    st.markdown(
-        f"Showing {df.shape[0]} universities from {len(selected_countries)} countries."
-    )
-    st.dataframe(df)
+        st.markdown(
+            f"Selected {df.shape[0]} universities from {len(selected_countries)} countries."
+        )
 
     return df
 
@@ -146,10 +146,6 @@ def cwur_all(df):
         "Select top N universities to display", 10, int(df.world_rank.max()), 250
     )
     fig = line_plot(df, N=topN)
-    st.plotly_chart(fig)
-
-    st.subheader("Some Viz")
-    fig = some_viz(df)
     st.plotly_chart(fig)
 
     fig = par_plot(df)
