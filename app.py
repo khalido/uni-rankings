@@ -139,14 +139,14 @@ def df_filter_country_and_year(df):
         st.subheader("Data")
         df_org = df.copy()
 
-        all_countries = list(df.country.unique())
+        all_countries = sorted(list(df.country.unique()))
 
         st.text("Select 1 or more countries")
         select_all = st.checkbox("tick to select all countries")
         if select_all:
             initial_countries = all_countries
         else:
-            initial_countries = ["Australia"]
+            initial_countries = all_countries[:20]
 
         selected_countries = st.multiselect(
             "Countries", all_countries, initial_countries
@@ -158,14 +158,16 @@ def df_filter_country_and_year(df):
         yr_max = int(df.year.max())
         yr_low, yr_high = st.slider("Years", yr_min, yr_max, (yr_min, yr_max), step=1)
 
-        st.write(yr_low, yr_high)
-        df = df.query("@yr_low <= year <= @yr_high")
+        try:
+            df = df.query("@yr_low <= year <= @yr_high")
+        except:
+            st.error("Failed to filter for years, check df for nulls")
 
         topN = st.slider(
             "Select top N universities to display",
             10,
             int(df.world_rank.max()),
-            100,
+            300,
             10,
         )
 
@@ -207,7 +209,7 @@ def pca_cluster(df, n_components=4, n_clusters=5):
     with col1:
         yr = st.selectbox("Select Year", np.arange(df.year.min(), df.year.max() + 1))
     with col2:
-        n_clusters = st.slider("Select number of clusters", 2,15,5)
+        n_clusters = st.slider("Select number of clusters", 2, 15, 5)
     d = d.query("year == @yr")
 
     # select only numeric cols, drop broad_impact as its full of nulls
@@ -260,7 +262,7 @@ def cwur_kaggle(df):
     df = df_filter_country_and_year(df)
 
     st.subheader("PCA & Clustering")
-    
+
     fig = pca_cluster(df)
     st.plotly_chart(fig)
 
@@ -298,6 +300,16 @@ def cwur_all(df):
     st.plotly_chart(fig)
 
 
+def shanghai(df):
+    df = df_filter_country_and_year(df)
+    st.write(df.head())
+
+
+def times(df):
+    df = df_filter_country_and_year(df)
+    st.write(df.head())
+
+
 def compare_rankings(data):
     st.header("Ranking vs Rankings")
     pass
@@ -327,9 +339,9 @@ def main():
     elif app_mode == app_modes[1]:
         cwur_all(data["cwur_all"])
     elif app_mode == app_modes[2]:
-        pass
+        shanghai(data["shanghai"])
     elif app_mode == app_modes[3]:
-        pass
+        times(data["times"])
     elif app_mode == app_modes[4]:
         compare_rankings(data)
 
